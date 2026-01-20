@@ -1,0 +1,88 @@
+{
+  "name": "custom-cmake-extension",
+  "displayName": "Custom CMake Extension",
+  "description": "Custom CMake",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.108.1"
+  },
+  "activationEvents": [
+    "onCommand:CustomCMake.openPanel"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "CustomCMakeContainer",
+          "title": "Hello Tool",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "CustomCMakeContainer": [
+        {
+          "id": "CustomCMakeSidebar",
+          "name": "Hello Panel"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "CustomCMake.selectSystem",
+        "title": "Select System"
+      },
+      {
+        "command": "CustomCMake.selectConfigure",
+        "title": "Select Configure"
+      },
+      {
+        "command": "CustomCMake.selectBuild",
+        "title": "Select Build"
+      },
+      {
+        "command": "CustomCMake.build",
+        "title": "Select Build"
+      },
+      {
+        "command": "CustomCMake.selectHostname",
+        "title": "Select Hostname"
+      },
+      {
+        "command": "CustomCMake.transferValue",
+        "title": "Select Transfer Value"
+      },
+      {
+        "command": "CustomCMake.transfer",
+        "title": "Transfer"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.108.1",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "eslint": "^9.39.2",
+    "typescript": "^5.9.3",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  },
+  "CustomCMake.build": "Main",
+  "CustomCMake.configure": "Release",
+  "CustomCMake.hostname": "gigamesh",
+  "CustomCMake.system": "build-aarch64",
+  "CustomCMake.transfer": [
+    "103",
+    "104",
+    "105"
+  ],
+}
