@@ -12,5 +12,12 @@
 	"myExtension.configure": "Release",
 	"myExtension.build": "Main",
 	"myExtension.hostname": "hostname1",
-	"myExtension.transfer": "103"
+	"myExtension.transfer": "103",
+	"CustomCMake.transfer": [
+		"105",
+		"117",
+		"01"
+	],
+	"CustomCMake.hostname": "gigamesh.live",
+	"CustomCMake.username": "gigamesh"
 }

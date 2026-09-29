@@ -2,13 +2,10 @@
   "name": "custom-cmake-extension",
   "displayName": "Custom CMake Extension",
   "description": "Custom CMake",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.108.1"
   },
-  "activationEvents": [
-    "onCommand:CustomCMake.openPanel"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
@@ -19,29 +16,26 @@
           "default": "build-aarch64",
           "description": "Target system or architecture for the CMake build"
         },
-        "CustomCMake.folder": {
-          "type": "string",
-          "default": "builds",
-          "description": "Folder name for transfer destination"
-        },
         "CustomCMake.configure": {
           "type": "string",
           "enum": [
             "Debug",
             "Release",
+            "RelWithDebInfo",
+            "MinSizeRel",
             "Custom"
           ],
           "default": "Release",
-          "description": "CMake build configuration type"
+          "description": "CMAKE_BUILD_TYPE used when configuring. 'Custom' adds no flag, so put your own in the configure command."
         },
         "CustomCMake.build": {
           "type": "string",
           "default": "Main",
-          "description": "CMake build target name"
+          "description": "CMake target to build (or 'All')"
         },
         "CustomCMake.username": {
           "type": "string",
-          "default": "user",
+          "default": "",
           "description": "Username used for build or deployment"
         },
         "CustomCMake.configureCommand": {
@@ -51,7 +45,7 @@
         },
         "CustomCMake.hostname": {
           "type": "string",
-          "default": "hostname1",
+          "default": "",
           "description": "Target hostname (single selection)"
         },
         "CustomCMake.transfer": {
@@ -59,10 +53,66 @@
           "items": {
             "type": "string"
           },
+          "default": [],
+          "description": "Selected transfer targets: a 5-digit port (uses the hostname), a number (host <hostPrefix><number>), an alias like bsnl154, or user@host."
+        },
+        "CustomCMake.buildDirectory": {
+          "type": "string",
+          "default": "build",
+          "description": "Build directory, relative to the workspace root"
+        },
+        "CustomCMake.hostDomain": {
+          "type": "string",
+          "default": "",
+          "description": "Domain appended to the hostname when it contains no dot (e.g. 'gigamesh.live')"
+        },
+        "CustomCMake.systems": {
+          "type": "array",
           "default": [
-            "103"
+            "build-aarch64",
+            "Linux"
           ],
-          "description": "Transfer numbers (multiple values allowed)"
+          "description": "Architectures offered in the picker",
+          "items": {
+            "type": "string"
+          }
+        },
+        "CustomCMake.hostnames": {
+          "type": "array",
+          "default": [],
+          "description": "Hostnames offered in the picker",
+          "items": {
+            "type": "string"
+          }
+        },
+        "CustomCMake.transferOptions": {
+          "type": "array",
+          "default": [],
+          "description": "Transfer targets offered in the picker (same formats as 'transfer')",
+          "items": {
+            "type": "string"
+          }
+        },
+        "CustomCMake.packagePattern": {
+          "type": "string",
+          "default": "*.ipk",
+          "description": "File name pattern of the package sent when the target name contains 'InstallerPackage'"
+        },
+        "CustomCMake.hostPrefix": {
+          "type": "string",
+          "default": "gigamesh",
+          "description": "Prefix for numeric targets: 154 becomes <prefix>154"
+        },
+        "CustomCMake.jobs": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Parallel build jobs (like make -j). 0 uses one job per CPU core."
+        },
+        "CustomCMake.saveBeforeBuild": {
+          "type": "boolean",
+          "default": true,
+          "description": "Save all modified files before building"
         }
       }
     },
@@ -79,50 +129,177 @@
       "CustomCMakeContainer": [
         {
           "id": "CustomCMakeSidebar",
-          "name": "Custom CMake"
+          "name": "Custom CMake",
+          "initialSize": 8
+        },
+        {
+          "id": "CustomCMakeStop",
+          "name": "Running",
+          "type": "webview",
+          "when": "customCMake.running",
+          "initialSize": 1
         }
       ]
     },
     "commands": [
       {
         "command": "CustomCMake.selectSystem",
-        "title": "Select System"
+        "title": "Select Architecture",
+        "category": "Custom CMake",
+        "icon": "$(chip)"
       },
       {
         "command": "CustomCMake.selectConfigure",
-        "title": "Select Configure"
+        "title": "Select Build Type",
+        "category": "Custom CMake",
+        "icon": "$(symbol-enum)"
       },
       {
         "command": "CustomCMake.selectBuild",
-        "title": "Select Build"
+        "title": "Select Target",
+        "category": "Custom CMake",
+        "icon": "$(target)"
       },
       {
         "command": "CustomCMake.build",
-        "title": "Build"
+        "title": "Build",
+        "category": "Custom CMake",
+        "icon": "$(tools)"
       },
       {
         "command": "CustomCMake.configureBuild",
-        "title": "Configure & Build"
+        "title": "Configure",
+        "category": "Custom CMake",
+        "icon": "$(gear)"
       },
       {
         "command": "CustomCMake.selectUsername",
-        "title": "Select Username"
+        "title": "Select Username",
+        "category": "Custom CMake",
+        "icon": "$(account)"
       },
       {
         "command": "CustomCMake.selectHostname",
-        "title": "Select Hostname"
+        "title": "Select Hostname",
+        "category": "Custom CMake",
+        "icon": "$(server)"
       },
       {
         "command": "CustomCMake.transferValue",
-        "title": "Select Transfer Value"
+        "title": "Select Transfer Number(s)",
+        "category": "Custom CMake",
+        "icon": "$(plug)"
       },
       {
         "command": "CustomCMake.transfer",
-        "title": "Transfer"
+        "title": "Transfer",
+        "category": "Custom CMake",
+        "icon": "$(cloud-upload)"
       },
       {
         "command": "CustomCMake.runAction",
-        "title": "Run Action"
+        "title": "Build and Transfer",
+        "category": "Custom CMake",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "CustomCMake.clean",
+        "title": "Clean",
+        "category": "Custom CMake",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "CustomCMake.refreshTargets",
+        "title": "Refresh Targets",
+        "category": "Custom CMake",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "CustomCMake.openSettings",
+        "title": "Open Settings",
+        "category": "Custom CMake",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "CustomCMake.setPassword",
+        "title": "Set Remote Password",
+        "category": "Custom CMake",
+        "icon": "$(key)"
+      },
+      {
+        "command": "CustomCMake.clearPassword",
+        "title": "Clear Remote Password",
+        "category": "Custom CMake",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "CustomCMake.runInstallAction",
+        "title": "Build, Transfer and Install",
+        "category": "Custom CMake",
+        "icon": "$(package)"
+      },
+      {
+        "command": "CustomCMake.selectJobs",
+        "title": "Select Build Threads",
+        "category": "Custom CMake",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "CustomCMake.cancel",
+        "title": "Stop Running Task",
+        "category": "Custom CMake",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "CustomCMake.transferInstall",
+        "title": "Transfer and Install",
+        "category": "Custom CMake",
+        "icon": "$(desktop-download)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "CustomCMake.cancel",
+          "when": "view == CustomCMakeSidebar && customCMake.running",
+          "group": "navigation@0"
+        },
+        {
+          "command": "CustomCMake.configureBuild",
+          "when": "view == CustomCMakeSidebar && !customCMake.running",
+          "group": "navigation@1"
+        },
+        {
+          "command": "CustomCMake.build",
+          "when": "view == CustomCMakeSidebar && !customCMake.running",
+          "group": "navigation@2"
+        },
+        {
+          "command": "CustomCMake.runAction",
+          "when": "view == CustomCMakeSidebar && !customCMake.running",
+          "group": "navigation@3"
+        },
+        {
+          "command": "CustomCMake.refreshTargets",
+          "when": "view == CustomCMakeSidebar",
+          "group": "1_misc@1"
+        },
+        {
+          "command": "CustomCMake.openSettings",
+          "when": "view == CustomCMakeSidebar",
+          "group": "1_misc@2"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "CustomCMakeSidebar",
+        "contents": "Open a folder containing a CMake project to get started.\n[Open Folder](command:vscode.openFolder)"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "customcmake"
       }
     ]
   },
@@ -143,13 +320,14 @@
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2"
   },
-  "CustomCMake.build": "Main",
-  "CustomCMake.configure": "Release",
-  "CustomCMake.hostname": "gigamesh",
-  "CustomCMake.system": "build-aarch64",
-  "CustomCMake.transfer": [
-    "103",
-    "104",
-    "105"
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "cmake",
+    "build",
+    "scp",
+    "opkg",
+    "embedded"
   ]
 }
